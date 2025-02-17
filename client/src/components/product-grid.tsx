@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { motion } from "framer-motion";
 
 interface ProductGridProps {
   products: Product[];
@@ -58,44 +59,70 @@ export default function ProductGrid({ products, isLoading }: ProductGridProps) {
     );
   }
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const item = {
+    hidden: { y: 20, opacity: 0 },
+    show: { y: 0, opacity: 1 }
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <motion.div 
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+      variants={container}
+      initial="hidden"
+      animate="show"
+    >
       {products.map((product) => (
-        <Card key={product.id} className="overflow-hidden group">
-          <div className="relative aspect-square">
-            <img
-              src={product.image}
-              alt={product.name}
-              className="object-cover w-full h-full"
-            />
-          </div>
-          <CardContent className="p-4">
-            <h3 className="font-semibold text-lg">{product.name}</h3>
-            <p className="text-muted-foreground">
-              ${Number(product.price).toFixed(2)}
-            </p>
-          </CardContent>
-          <CardFooter className="p-4 pt-0 flex gap-2">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => addToCartMutation.mutate(product.id)}
-              disabled={addToCartMutation.isPending}
-            >
-              <ShoppingCart className="h-4 w-4 mr-2" />
-              Add to Cart
-            </Button>
-            <Button
-              variant="destructive"
-              size="icon"
-              onClick={() => deleteMutation.mutate(product.id)}
-              disabled={deleteMutation.isPending}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </CardFooter>
-        </Card>
+        <motion.div key={product.id} variants={item}>
+          <Card className="overflow-hidden group hover:shadow-xl transition-shadow duration-300">
+            <div className="relative aspect-square overflow-hidden">
+              <img
+                src={product.image}
+                alt={product.name}
+                className="object-cover w-full h-full transform group-hover:scale-105 transition-transform duration-300"
+              />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            </div>
+            <CardContent className="p-4">
+              <h3 className="font-semibold text-lg group-hover:text-primary transition-colors duration-300">
+                {product.name}
+              </h3>
+              <p className="text-muted-foreground bg-gradient-to-r from-primary/90 to-primary/60 bg-clip-text text-transparent font-medium">
+                ${Number(product.price).toFixed(2)}
+              </p>
+            </CardContent>
+            <CardFooter className="p-4 pt-0 flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1 group-hover:border-primary group-hover:text-primary transition-colors duration-300"
+                onClick={() => addToCartMutation.mutate(product.id)}
+                disabled={addToCartMutation.isPending}
+              >
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                Add to Cart
+              </Button>
+              <Button
+                variant="destructive"
+                size="icon"
+                onClick={() => deleteMutation.mutate(product.id)}
+                disabled={deleteMutation.isPending}
+                className="hover:scale-105 active:scale-95 transition-transform duration-150"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </CardFooter>
+          </Card>
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 }
