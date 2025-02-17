@@ -1,6 +1,7 @@
 import { pgTable, text, serial, numeric, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 export const products = pgTable("products", {
   id: serial("id").primaryKey(),
@@ -14,9 +15,18 @@ export const products = pgTable("products", {
 
 export const cartItems = pgTable("cart_items", {
   id: serial("id").primaryKey(),
-  productId: integer("product_id").notNull(),
+  productId: integer("product_id")
+    .notNull()
+    .references(() => products.id),
   quantity: integer("quantity").notNull().default(1),
 });
+
+export const cartItemsRelations = relations(cartItems, ({ one }) => ({
+  product: one(products, {
+    fields: [cartItems.productId],
+    references: [products.id],
+  }),
+}));
 
 // Enhanced validation schema for products
 export const insertProductSchema = createInsertSchema(products)
@@ -88,6 +98,8 @@ export const searchParamsSchema = z.object({
 
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
-export type CartItem = typeof cartItems.$inferSelect;
+export type CartItem = typeof cartItems.$inferSelect & {
+  product: Product;
+};
 export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
 export type SearchParams = z.infer<typeof searchParamsSchema>;
