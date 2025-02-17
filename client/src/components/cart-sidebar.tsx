@@ -40,14 +40,35 @@ export default function CartSidebar({ open, onClose }: CartSidebarProps) {
         description: "Item has been removed from your cart",
       });
     },
+    onError: (error: Error) => {
+      toast({
+        title: "Error removing item",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   const updateQuantityMutation = useMutation({
     mutationFn: async ({ id, quantity }: { id: number; quantity: number }) => {
+      if (quantity < 1 || quantity > 100) {
+        throw new Error("Quantity must be between 1 and 100");
+      }
       await apiRequest("PATCH", `/api/cart/${id}`, { quantity });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
+      toast({
+        title: "Quantity updated",
+        description: "Cart item quantity has been updated",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error updating quantity",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -103,7 +124,9 @@ export default function CartSidebar({ open, onClose }: CartSidebarProps) {
                             quantity: Math.max(1, item.quantity - 1),
                           })
                         }
-                        disabled={updateQuantityMutation.isPending}
+                        disabled={
+                          updateQuantityMutation.isPending || item.quantity <= 1
+                        }
                       >
                         <Minus className="h-4 w-4" />
                       </Button>
@@ -115,10 +138,12 @@ export default function CartSidebar({ open, onClose }: CartSidebarProps) {
                         onClick={() =>
                           updateQuantityMutation.mutate({
                             id: item.id,
-                            quantity: item.quantity + 1,
+                            quantity: Math.min(100, item.quantity + 1),
                           })
                         }
-                        disabled={updateQuantityMutation.isPending}
+                        disabled={
+                          updateQuantityMutation.isPending || item.quantity >= 100
+                        }
                       >
                         <Plus className="h-4 w-4" />
                       </Button>
