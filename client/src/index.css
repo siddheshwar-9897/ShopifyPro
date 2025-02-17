@@ -10,4 +10,53 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+
+  /* Default theme */
+  .theme-default {
+    @apply bg-background text-foreground;
+  }
+
+  /* High contrast theme */
+  .theme-high-contrast {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+    --border: 0 0% 0%;
+
+    /* Improve focus visibility */
+    *:focus {
+      @apply outline-2 outline-offset-2 outline-black;
+    }
+
+    /* Enhanced text contrast */
+    a:not([class]),
+    p:not([class]),
+    h1:not([class]),
+    h2:not([class]),
+    h3:not([class]) {
+      @apply text-black;
+    }
+
+    /* Better button contrast */
+    button:not([class]) {
+      @apply bg-black text-white border-2 border-black;
+    }
+  }
+
+  /* Accessibility improvements */
+  .sr-only {
+    @apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
+  }
+
+  /* Skip to main content link */
+  .skip-to-content {
+    @apply sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 
+           focus:p-4 focus:bg-background focus:text-foreground focus:outline-none 
+           focus:ring-2 focus:ring-primary;
+  }
 }
