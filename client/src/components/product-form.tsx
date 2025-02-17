@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const productSchema = insertProductSchema.extend({
   price: insertProductSchema.shape.price.transform((val) => val.toString()),
@@ -64,95 +64,109 @@ export default function ProductForm({ onSuccess }: ProductFormProps) {
   });
 
   return (
-    <>
-      <DialogHeader>
-        <DialogTitle>Add New Product</DialogTitle>
+    <div className="max-h-[80vh] overflow-y-auto px-1">
+      <DialogHeader className="mb-6">
+        <DialogTitle className="text-2xl">Add New Product</DialogTitle>
+        <DialogDescription>
+          Fill in the product details below. All fields marked with * are required.
+        </DialogDescription>
       </DialogHeader>
+
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit((data) => mutation.mutate(data))}
-          className="space-y-4 mt-4"
+          className="space-y-6"
         >
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Product name" {...field} />
-                </FormControl>
-                <FormDescription>
-                  Use letters, numbers, spaces, hyphens, and underscores only
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid gap-6 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Product name" {...field} className="w-full" />
+                  </FormControl>
+                  <FormDescription>
+                    Use letters, numbers, spaces, hyphens, and underscores only
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="price"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Price</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    max="999999.99"
-                    placeholder="0.00"
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Enter a price between $0.01 and $999,999.99
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <FormField
+              control={form.control}
+              name="price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Price *</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      max="999999.99"
+                      placeholder="0.00"
+                      {...field}
+                      className="w-full"
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Enter a price between $0.01 and $999,999.99
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-          <FormField
-            control={form.control}
-            name="inventory"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Initial Inventory</FormLabel>
-                <FormControl>
-                  <Input
-                    type="number"
-                    min="0"
-                    step="1"
-                    placeholder="0"
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Enter the initial stock quantity
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="grid gap-6 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="inventory"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Initial Inventory *</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="0"
+                      step="1"
+                      placeholder="0"
+                      {...field}
+                      className="w-full"
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Enter the initial stock quantity
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="category"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Category</FormLabel>
-                <FormControl>
-                  <Input placeholder="Product category" {...field} />
-                </FormControl>
-                <FormDescription>
-                  Optional: categorize your product for better organization
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Product category"
+                      {...field}
+                      className="w-full"
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Optional: categorize your product
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           <FormField
             control={form.control}
@@ -164,6 +178,7 @@ export default function ProductForm({ onSuccess }: ProductFormProps) {
                   <Input
                     placeholder="Product description"
                     {...field}
+                    className="w-full"
                   />
                 </FormControl>
                 <FormDescription>
@@ -179,9 +194,13 @@ export default function ProductForm({ onSuccess }: ProductFormProps) {
             name="image"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Image URL</FormLabel>
+                <FormLabel>Image URL *</FormLabel>
                 <FormControl>
-                  <Input placeholder="https://..." {...field} />
+                  <Input 
+                    placeholder="https://..."
+                    {...field}
+                    className="w-full"
+                  />
                 </FormControl>
                 <FormDescription>
                   Must be a secure HTTPS URL for product image
@@ -193,13 +212,13 @@ export default function ProductForm({ onSuccess }: ProductFormProps) {
 
           <Button
             type="submit"
-            className="w-full"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground transition-colors"
             disabled={mutation.isPending}
           >
             {mutation.isPending ? "Creating..." : "Create Product"}
           </Button>
         </form>
       </Form>
-    </>
+    </div>
   );
 }
