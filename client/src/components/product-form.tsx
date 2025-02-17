@@ -35,6 +35,9 @@ export default function ProductForm({ onSuccess }: ProductFormProps) {
       name: "",
       price: "",
       image: "",
+      inventory: 0,
+      description: "",
+      category: "",
     },
   });
 
@@ -105,6 +108,66 @@ export default function ProductForm({ onSuccess }: ProductFormProps) {
                 </FormControl>
                 <FormDescription>
                   Enter a price between $0.01 and $999,999.99
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="inventory"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Initial Inventory</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="0"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Enter the initial stock quantity
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="category"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Category</FormLabel>
+                <FormControl>
+                  <Input placeholder="Product category" {...field} />
+                </FormControl>
+                <FormDescription>
+                  Optional: categorize your product for better organization
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Product description"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Optional: describe your product (10-1000 characters)
                 </FormDescription>
                 <FormMessage />
               </FormItem>

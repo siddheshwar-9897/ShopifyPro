@@ -7,6 +7,9 @@ export const products = pgTable("products", {
   name: text("name").notNull(),
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),
   image: text("image").notNull(),
+  description: text("description"),
+  inventory: integer("inventory").notNull().default(0),
+  category: text("category"),
 });
 
 export const cartItems = pgTable("cart_items", {
@@ -21,6 +24,9 @@ export const insertProductSchema = createInsertSchema(products)
     name: true,
     price: true,
     image: true,
+    description: true,
+    inventory: true,
+    category: true,
   })
   .extend({
     name: z.string()
@@ -41,6 +47,18 @@ export const insertProductSchema = createInsertSchema(products)
       .startsWith("https://", "Image URL must start with https:// for security")
       .min(5, "Image URL is too short")
       .max(500, "Image URL is too long"),
+    description: z.string()
+      .min(10, "Description must be at least 10 characters")
+      .max(1000, "Description cannot exceed 1000 characters")
+      .optional(),
+    inventory: z.number()
+      .int("Inventory must be a whole number")
+      .min(0, "Inventory cannot be negative")
+      .default(0),
+    category: z.string()
+      .min(2, "Category must be at least 2 characters")
+      .max(50, "Category cannot exceed 50 characters")
+      .optional(),
   });
 
 // Enhanced validation schema for cart items
@@ -56,7 +74,20 @@ export const insertCartItemSchema = createInsertSchema(cartItems)
       .max(100, "Maximum quantity per item is 100"),
   });
 
+// Search and pagination params schema
+export const searchParamsSchema = z.object({
+  query: z.string().optional(),
+  category: z.string().optional(),
+  minPrice: z.number().optional(),
+  maxPrice: z.number().optional(),
+  page: z.number().int().min(1).default(1),
+  limit: z.number().int().min(1).max(100).default(20),
+  sortBy: z.enum(['name', 'price', 'inventory']).optional(),
+  sortOrder: z.enum(['asc', 'desc']).optional(),
+});
+
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type CartItem = typeof cartItems.$inferSelect;
 export type InsertCartItem = z.infer<typeof insertCartItemSchema>;
+export type SearchParams = z.infer<typeof searchParamsSchema>;

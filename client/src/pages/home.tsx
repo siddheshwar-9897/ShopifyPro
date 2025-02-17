@@ -7,14 +7,29 @@ import CartSidebar from "@/components/cart-sidebar";
 import ProductForm from "@/components/product-form";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { motion } from "framer-motion";
+import type { Product } from "@shared/schema";
+
+interface ProductsResponse {
+  data: Product[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
 
 export default function Home() {
   const [isOpen, setIsOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [page, setPage] = useState(1);
 
-  const { data: products = [], isLoading } = useQuery({
-    queryKey: ["/api/products"],
+  const { data: response, isLoading } = useQuery<ProductsResponse>({
+    queryKey: ["/api/products", { page }],
   });
+
+  const products = response?.data ?? [];
+  const pagination = response?.pagination;
 
   return (
     <div className="min-h-screen bg-background">
@@ -68,6 +83,29 @@ export default function Home() {
         aria-busy={isLoading}
       >
         <ProductGrid products={products} isLoading={isLoading} />
+        {pagination && pagination.totalPages > 1 && (
+          <div className="mt-8 flex justify-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="hover:border-primary hover:text-primary transition-colors duration-300"
+            >
+              Previous
+            </Button>
+            <span className="flex items-center px-4 font-medium">
+              Page {page} of {pagination.totalPages}
+            </span>
+            <Button
+              variant="outline"
+              onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
+              disabled={page === pagination.totalPages}
+              className="hover:border-primary hover:text-primary transition-colors duration-300"
+            >
+              Next
+            </Button>
+          </div>
+        )}
       </main>
 
       {/* Product Form Dialog */}
