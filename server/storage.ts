@@ -124,7 +124,7 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Product not found");
     }
 
-    // Create new cart item 
+    // Create new cart item
     const [newItem] = await db
       .insert(cartItems)
       .values({
@@ -134,7 +134,9 @@ export class DatabaseStorage implements IStorage {
       .returning();
 
     return {
-      ...newItem,
+      id: newItem.id,
+      productId: newItem.productId,
+      quantity: newItem.quantity,
       product
     };
   }
