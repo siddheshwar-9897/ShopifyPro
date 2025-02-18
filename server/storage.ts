@@ -17,6 +17,7 @@ export interface IStorage {
   createProduct(product: InsertProduct): Promise<Product>;
   deleteProduct(id: number): Promise<void>;
   updateProductInventory(id: number, quantity: number): Promise<Product>;
+  getProduct(id: number): Promise<Product | null>; // Added getProduct
 
   // Cart operations
   getCartItems(): Promise<CartItem[]>;
@@ -104,6 +105,12 @@ export class DatabaseStorage implements IStorage {
     return product;
   }
 
+  async getProduct(id: number): Promise<Product | null> {
+    const [product] = await db.select().from(products).where(eq(products.id, id));
+    return product;
+  }
+
+
   async getCartItems(): Promise<CartItem[]> {
     const items = await db.query.cartItems.findMany({
       with: {
@@ -115,68 +122,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async addToCart(item: InsertCartItem): Promise<CartItem> {
-    const [product] = await db
-      .select()
-      .from(products)
-      .where(eq(products.id, item.productId));
-
+    const product = await this.getProduct(item.productId);
     if (!product) {
       throw new Error("Product not found");
     }
 
-    const quantity = item.quantity || 1;
-
-    if (product.inventory < quantity) {
+    if (product.inventory < item.quantity) {
       throw new Error("Not enough inventory");
     }
 
-    // Check for existing cart item
-    const existingItem = await db.query.cartItems.findFirst({
-      where: eq(cartItems.productId, item.productId),
-      with: { product: true }
-    });
-
-    if (existingItem) {
-      const newQuantity = existingItem.quantity + quantity;
-      if (product.inventory < quantity) {
-        throw new Error("Not enough inventory");
-      }
-
-      // Update quantity if item exists
-      const [updatedItem] = await db
-        .update(cartItems)
-        .set({ quantity: newQuantity })
-        .where(eq(cartItems.id, existingItem.id))
-        .returning();
-
-      // Update product inventory
-      await db
-        .update(products)
-        .set({ inventory: product.inventory - quantity })
-        .where(eq(products.id, product.id));
-
-      return { ...updatedItem, product };
-    }
-
-    // Create new cart item
-    const [newItem] = await db
+    const cartItem = await db
       .insert(cartItems)
-      .values({
-        productId: item.productId,
-        quantity
-      })
-      .returning();
-
-    // Update product inventory
-    await db
-      .update(products)
-      .set({ inventory: product.inventory - quantity })
-      .where(eq(products.id, product.id));
+      .values(item)
+      .returning()
+      .then((rows) => rows[0]);
 
     return {
-      id: newItem.id,
-      productId: newItem.productId,
-      quantity: newItem.quantity,
+      ...cartItem,
       product
     };
   }
