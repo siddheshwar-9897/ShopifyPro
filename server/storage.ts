@@ -115,7 +115,6 @@ export class DatabaseStorage implements IStorage {
   }
 
   async addToCart(item: InsertCartItem): Promise<CartItem> {
-    // Check if product exists and has sufficient inventory
     const [product] = await db
       .select()
       .from(products)
@@ -125,25 +124,20 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Product not found");
     }
 
-    if (product.inventory < item.quantity) {
-      throw new Error("Insufficient inventory");
-    }
+    // Create new cart item 
+    const [newItem] = await db
+      .insert(cartItems)
+      .values({
+        productId: item.productId,
+        quantity: item.quantity || 1
+      })
+      .returning();
 
-    // Check if item already exists in cart
-    const existingCartItem = await db.query.cartItems.findFirst({
-      where: eq(cartItems.productId, item.productId),
-      with: {
-        product: true
-      }
-    });
-
-    if (existingCartItem) {
-      const newQuantity = existingCartItem.quantity + (item.quantity || 1);
-      if (product.inventory < newQuantity) {
-        throw new Error("Insufficient inventory for requested quantity");
-      }
-      return this.updateCartItemQuantity(existingCartItem.id, newQuantity);
-    }
+    return {
+      ...newItem,
+      product
+    };
+  }
 
     // Create new cart item and update inventory
     const [newItem] = await db
