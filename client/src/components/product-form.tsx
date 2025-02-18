@@ -135,6 +135,7 @@ export default function ProductForm({ onSuccess }: ProductFormProps) {
                       step="1"
                       placeholder="0"
                       {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
                       className="w-full"
                     />
                   </FormControl>
