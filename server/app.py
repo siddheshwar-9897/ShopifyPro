@@ -1,61 +1,77 @@
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import Optional, List
-import asyncpg
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.core.paginator import Paginator
+from django.conf import settings
+from django.urls import path
+from django.apps import AppConfig
+from django.core.asgi import get_asgi_application
+import json
 import os
 
-app = FastAPI()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+settings.configure(
+    DEBUG=True,
+    SECRET_KEY='your-secret-key',
+    ROOT_URLCONF=__name__,
+    MIDDLEWARE=[
+        'django.middleware.common.CommonMiddleware',
+        'django.middleware.csrf.CsrfViewMiddleware',
+        'corsheaders.middleware.CorsMiddleware',
+    ],
+    INSTALLED_APPS=[
+        'corsheaders',
+    ],
+    CORS_ALLOW_ALL_ORIGINS=True,
+    DATABASES={
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('DATABASE_URL'),
+        }
+    }
 )
 
-async def get_db():
-    if not hasattr(app.state, "pool"):
-        app.state.pool = await asyncpg.create_pool(os.environ.get("DATABASE_URL"))
-    return app.state.pool
+class ApiConfig(AppConfig):
+    name = 'api'
 
-@app.get("/api/products")
-async def get_products(
-    q: Optional[str] = None,
-    category: Optional[str] = None,
-    min_price: Optional[float] = None,
-    max_price: Optional[float] = None,
-    page: int = 1,
-    limit: int = 20,
-    sort_by: Optional[str] = None,
-    sort_order: Optional[str] = None
-):
-    pool = await get_db()
-    async with pool.acquire() as conn:
-        # Implement query logic here
-        products = await conn.fetch("SELECT * FROM products LIMIT $1 OFFSET $2", limit, (page - 1) * limit)
-        total = await conn.fetchval("SELECT COUNT(*) FROM products")
-        
-        return {
-            "data": products,
-            "pagination": {
-                "total": total,
-                "page": page,
-                "limit": limit,
-                "totalPages": (total + limit - 1) // limit
-            }
+@csrf_exempt
+def get_products(request):
+    page = int(request.GET.get('page', 1))
+    limit = int(request.GET.get('limit', 20))
+    q = request.GET.get('q')
+    category = request.GET.get('category')
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
+    sort_by = request.GET.get('sort_by')
+    sort_order = request.GET.get('sort_order')
+    
+    # Implement query logic here
+    products = []  # Replace with actual database query
+    paginator = Paginator(products, limit)
+    page_obj = paginator.get_page(page)
+    
+    return JsonResponse({
+        'data': list(page_obj),
+        'pagination': {
+            'total': paginator.count,
+            'page': page,
+            'limit': limit,
+            'totalPages': paginator.num_pages
         }
+    })
 
-@app.get("/api/cart")
-async def get_cart():
-    pool = await get_db()
-    async with pool.acquire() as conn:
-        items = await conn.fetch("SELECT * FROM cart")
-        return items
+@csrf_exempt
+def get_cart(request):
+    # Implement cart retrieval logic
+    items = []  # Replace with actual database query
+    return JsonResponse(items, safe=False)
+
+urlpatterns = [
+    path('api/products', get_products),
+    path('api/cart', get_cart),
+]
+
+application = get_asgi_application()
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+    uvicorn.run(application, host="0.0.0.0", port=5000)
