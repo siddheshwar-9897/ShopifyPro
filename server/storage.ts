@@ -124,6 +124,10 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Product not found");
     }
 
+    if (product.inventory < item.quantity) {
+      throw new Error("Not enough inventory");
+    }
+
     // Check for existing cart item
     const existingItem = await db.query.cartItems.findFirst({
       where: eq(cartItems.productId, item.productId),
@@ -131,12 +135,24 @@ export class DatabaseStorage implements IStorage {
     });
 
     if (existingItem) {
+      const newQuantity = existingItem.quantity + (item.quantity || 1);
+      if (product.inventory < newQuantity) {
+        throw new Error("Not enough inventory");
+      }
+
       // Update quantity if item exists
       const [updatedItem] = await db
         .update(cartItems)
-        .set({ quantity: existingItem.quantity + (item.quantity || 1) })
+        .set({ quantity: newQuantity })
         .where(eq(cartItems.id, existingItem.id))
         .returning();
+
+      // Update product inventory
+      await db
+        .update(products)
+        .set({ inventory: product.inventory - item.quantity })
+        .where(eq(products.id, product.id));
+
       return { ...updatedItem, product };
     }
 
@@ -148,6 +164,12 @@ export class DatabaseStorage implements IStorage {
         quantity: item.quantity || 1
       })
       .returning();
+
+    // Update product inventory
+    await db
+      .update(products)
+      .set({ inventory: product.inventory - item.quantity })
+      .where(eq(products.id, product.id));
 
     return {
       id: newItem.id,
