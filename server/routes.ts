@@ -129,9 +129,28 @@ export async function registerRoutes(app: Express) {
 
   app.post("/api/cart", async (req, res) => {
     try {
-      const item = insertCartItemSchema.parse(req.body);
-      const created = await storage.addToCart(item);
-      res.json(created);
+      const params = insertCartItemSchema.parse(req.body);
+      const product = await storage.getProduct(params.productId);
+
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      if (product.inventory < params.quantity) {
+        return res.status(400).json({ message: "Not enough inventory" });
+      }
+
+      const created = await storage.addToCart({
+        productId: params.productId,
+        quantity: params.quantity
+      });
+
+      res.json({
+        id: created.id,
+        productId: created.productId,
+        quantity: created.quantity,
+        product: product
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         const validationError = fromZodError(error);
