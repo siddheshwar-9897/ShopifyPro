@@ -140,27 +140,80 @@ def logout_user(request):
     })
 
 @csrf_exempt
-def get_cart(request):
-    cart_items = CartItem.objects.select_related('product').all()
-    data = [{
-        'id': item.id,
-        'productId': item.product.id,
-        'quantity': item.quantity,
-        'product': {
-            'id': item.product.id,
-            'name': item.product.name,
-            'price': str(item.product.price),
-            'image': item.product.image,
-            'description': item.product.description,
-            'inventory': item.product.inventory,
-            'category': item.product.category
-        }
-    } for item in cart_items]
-    return JsonResponse(data, safe=False)
+def handle_cart(request):
+    if request.method == 'GET':
+        cart_items = CartItem.objects.select_related('product').all()
+        data = [{
+            'id': item.id,
+            'productId': item.product.id,
+            'quantity': item.quantity,
+            'product': {
+                'id': item.product.id,
+                'name': item.product.name,
+                'price': str(item.product.price),
+                'image': item.product.image,
+                'description': item.product.description,
+                'inventory': item.product.inventory,
+                'category': item.product.category
+            }
+        } for item in cart_items]
+        return JsonResponse(data, safe=False)
+    
+    elif request.method == 'POST':
+        data = json.loads(request.body)
+        product_id = data.get('productId')
+        quantity = data.get('quantity', 1)
+        
+        try:
+            product = Product.objects.get(id=product_id)
+            cart_item = CartItem.objects.create(
+                product=product,
+                quantity=quantity
+            )
+            return JsonResponse({
+                'id': cart_item.id,
+                'productId': product.id,
+                'quantity': cart_item.quantity,
+                'product': {
+                    'id': product.id,
+                    'name': product.name,
+                    'price': str(product.price),
+                    'image': product.image
+                }
+            })
+        except Product.DoesNotExist:
+            return JsonResponse({'error': 'Product not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+def handle_cart_item(request, item_id):
+    try:
+        cart_item = CartItem.objects.get(id=item_id)
+        
+        if request.method == 'DELETE':
+            cart_item.delete()
+            return JsonResponse({}, status=204)
+            
+        elif request.method == 'PATCH':
+            data = json.loads(request.body)
+            quantity = data.get('quantity')
+            if quantity:
+                cart_item.quantity = quantity
+                cart_item.save()
+                return JsonResponse({
+                    'id': cart_item.id,
+                    'quantity': cart_item.quantity
+                })
+                
+        return JsonResponse({'error': 'Invalid method'}, status=405)
+    except CartItem.DoesNotExist:
+        return JsonResponse({'error': 'Cart item not found'}, status=404)
 
 urlpatterns = [
     path('api/products', get_products),
-    path('api/cart', get_cart),
+    path('api/cart', handle_cart),
+    path('api/cart/<int:item_id>', handle_cart_item),
 ]
 
 application = get_asgi_application()
