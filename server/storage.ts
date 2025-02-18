@@ -124,6 +124,22 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Product not found");
     }
 
+    // Check for existing cart item
+    const existingItem = await db.query.cartItems.findFirst({
+      where: eq(cartItems.productId, item.productId),
+      with: { product: true }
+    });
+
+    if (existingItem) {
+      // Update quantity if item exists
+      const [updatedItem] = await db
+        .update(cartItems)
+        .set({ quantity: existingItem.quantity + (item.quantity || 1) })
+        .where(eq(cartItems.id, existingItem.id))
+        .returning();
+      return { ...updatedItem, product };
+    }
+
     // Create new cart item
     const [newItem] = await db
       .insert(cartItems)
