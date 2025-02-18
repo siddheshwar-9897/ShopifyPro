@@ -124,7 +124,9 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Product not found");
     }
 
-    if (product.inventory < item.quantity) {
+    const quantity = item.quantity || 1;
+
+    if (product.inventory < quantity) {
       throw new Error("Not enough inventory");
     }
 
@@ -135,8 +137,8 @@ export class DatabaseStorage implements IStorage {
     });
 
     if (existingItem) {
-      const newQuantity = existingItem.quantity + (item.quantity || 1);
-      if (product.inventory < newQuantity) {
+      const newQuantity = existingItem.quantity + quantity;
+      if (product.inventory < quantity) {
         throw new Error("Not enough inventory");
       }
 
@@ -150,7 +152,7 @@ export class DatabaseStorage implements IStorage {
       // Update product inventory
       await db
         .update(products)
-        .set({ inventory: product.inventory - item.quantity })
+        .set({ inventory: product.inventory - quantity })
         .where(eq(products.id, product.id));
 
       return { ...updatedItem, product };
@@ -161,14 +163,14 @@ export class DatabaseStorage implements IStorage {
       .insert(cartItems)
       .values({
         productId: item.productId,
-        quantity: item.quantity || 1
+        quantity
       })
       .returning();
 
     // Update product inventory
     await db
       .update(products)
-      .set({ inventory: product.inventory - item.quantity })
+      .set({ inventory: product.inventory - quantity })
       .where(eq(products.id, product.id));
 
     return {
