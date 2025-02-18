@@ -1,6 +1,9 @@
 
 from django.db import models
 from django.http import JsonResponse
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login, logout
+from django.middleware.csrf import get_token
 from django.views.decorators.csrf import csrf_exempt
 from django.core.paginator import Paginator
 from django.conf import settings
@@ -58,6 +61,46 @@ def get_products(request):
     max_price = request.GET.get('maxPrice')
     sort_by = request.GET.get('sortBy')
     sort_order = request.GET.get('sortOrder')
+
+
+@csrf_exempt
+def register_user(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        try:
+            user = User.objects.create_user(
+                username=data['username'],
+                password=data['password'],
+                email=data.get('email', '')
+            )
+            return JsonResponse({'status': 'success', 'userId': user.id})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+@csrf_exempt
+def login_user(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        user = authenticate(
+            username=data['username'],
+            password=data['password']
+        )
+        if user:
+            login(request, user)
+            return JsonResponse({
+                'status': 'success',
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'isAdmin': user.is_staff
+                }
+            })
+        return JsonResponse({'status': 'error', 'message': 'Invalid credentials'}, status=401)
+
+@csrf_exempt
+def logout_user(request):
+    logout(request)
+    return JsonResponse({'status': 'success'})
 
     products = Product.objects.all()
 

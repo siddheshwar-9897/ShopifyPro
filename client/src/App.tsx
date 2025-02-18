@@ -7,10 +7,21 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import AccessibilityControls from "@/components/accessibility-controls";
 
+// Placeholder AdminPanel component
+function AdminPanel() {
+  return (
+    <div>
+      <h1>Admin Panel</h1>
+      <p>This is a placeholder admin panel.</p>
+    </div>
+  );
+}
+
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/admin" component={AdminPanel} />
       <Route component={NotFound} />
     </Switch>
   );
