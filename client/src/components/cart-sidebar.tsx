@@ -23,7 +23,7 @@ interface CartSidebarProps {
 }
 
 export default function CartSidebar({ open, onClose }: CartSidebarProps) {
-  const { data: cartItems = [], isLoading } = useQuery<CartItem[]>({
+  const { data: cartItems = [], isLoading, refetch } = useQuery<CartItem[]>({
     queryKey: ["/api/cart"],
   });
 

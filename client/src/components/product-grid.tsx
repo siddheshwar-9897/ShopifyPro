@@ -32,13 +32,21 @@ export default function ProductGrid({ products, isLoading }: ProductGridProps) {
 
   const addToCartMutation = useMutation({
     mutationFn: async (productId: number) => {
-      await apiRequest("POST", "/api/cart", { productId, quantity: 1 });
+      const response = await apiRequest("POST", "/api/cart", { productId, quantity: 1 });
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/cart"] });
       toast({
         title: "Added to cart",
         description: "Product has been added to your cart",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
       });
     },
   });
