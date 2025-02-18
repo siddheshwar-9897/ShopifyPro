@@ -59,13 +59,24 @@ app.use((req, res, next) => {
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client
   const PORT = process.env.PORT || 5000;
+  const MAX_RETRIES = 3;
+  let retries = 0;
+  let currentPort = PORT;
+
   server.on('error', (e: any) => {
     if (e.code === 'EADDRINUSE') {
-      log(`Port ${PORT} is busy, retrying...`);
-      setTimeout(() => {
-        server.close();
-        server.listen(PORT, "0.0.0.0");
-      }, 1000);
+      if (retries < MAX_RETRIES) {
+        currentPort = Number(PORT) + retries + 1;
+        retries++;
+        log(`Port ${PORT} is busy, trying port ${currentPort}...`);
+        setTimeout(() => {
+          server.close();
+          server.listen(currentPort, "0.0.0.0");
+        }, 1000);
+      } else {
+        log(`Failed to find an available port after ${MAX_RETRIES} attempts`);
+        process.exit(1);
+      }
     }
   });
   
