@@ -139,26 +139,6 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-    // Create new cart item and update inventory
-    const [newItem] = await db
-      .insert(cartItems)
-      .values({
-        productId: item.productId,
-        quantity: item.quantity || 1
-      })
-      .returning();
-
-    await this.updateProductInventory(
-      product.id,
-      product.inventory - (item.quantity || 1)
-    );
-
-    return {
-      ...newItem,
-      product
-    };
-  }
-
   async removeFromCart(id: number): Promise<void> {
     const cartItem = await db.query.cartItems.findFirst({
       where: eq(cartItems.id, id),
